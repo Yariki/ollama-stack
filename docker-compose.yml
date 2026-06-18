@@ -1,0 +1,53 @@
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    restart: unless-stopped
+    tty: true
+
+    # Ollama API.
+    # Bound to localhost only for safety.
+    # Open WebUI still accesses it internally through http://ollama:11434.
+    ports:
+      - "11434:11434"
+
+    volumes:
+      # Ollama models and config on local SSD
+      - ${OLLAMA_DATA_PATH}:/root/.ollama
+
+    environment:
+      # Listen on all container interfaces so Open WebUI can reach it
+      OLLAMA_HOST: 0.0.0.0:11434
+
+    networks:
+      - llm-net
+
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui
+    restart: unless-stopped
+
+    depends_on:
+      - ollama
+
+    ports:
+      - "${OPEN_WEBUI_PORT:-3000}:8080"
+
+    volumes:
+      # Open WebUI database, settings, uploaded files, etc. on local SSD
+      - ${OPEN_WEBUI_DATA_PATH}:/app/backend/data
+
+    environment:
+      # Docker-internal address of the Ollama service
+      OLLAMA_BASE_URL: http://ollama:11434
+
+      # Important: keep this stable between container recreations
+      WEBUI_SECRET_KEY: ${WEBUI_SECRET_KEY}
+
+    networks:
+      - llm-net
+
+networks:
+  llm-net:
+    name: llm-net
+    driver: bridge

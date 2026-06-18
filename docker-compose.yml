@@ -18,6 +18,8 @@ services:
     environment:
       # Listen on all container interfaces so Open WebUI can reach it
       OLLAMA_HOST: 0.0.0.0:11434
+      # Default context window for generation requests
+      OLLAMA_CONTEXT_LENGTH: 8192
 
     networks:
       - llm-net
@@ -40,6 +42,10 @@ services:
     environment:
       # Docker-internal address of the Ollama service
       OLLAMA_BASE_URL: http://ollama:11434
+
+      # Default model options sent by Open WebUI to Ollama
+      # num_ctx: context window, num_predict: max generated tokens
+      DEFAULT_MODEL_PARAMS: '{"num_ctx":8192,"num_predict":512}'
 
       # Important: keep this stable between container recreations
       WEBUI_SECRET_KEY: ${WEBUI_SECRET_KEY}

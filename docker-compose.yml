@@ -1,39 +1,42 @@
 services:
-  ollama:
-    image: ollama/ollama:latest
-    container_name: ollama
-    restart: unless-stopped
-    tty: true
+  # ollama:
+  #   image: ollama/ollama:latest
+  #   container_name: ollama
+  #   restart: unless-stopped
+  #   tty: true
 
-    # Ollama API.
-    # Bound to localhost only for safety.
-    # Open WebUI still accesses it internally through http://ollama:11434.
-    ports:
-      - "11434:11434"
+  #   # Ollama API.
+  #   # Bound to localhost only for safety.
+  #   # Open WebUI still accesses it internally through http://ollama:11434.
+  #   ports:
+  #     - "11434:11434"
 
-    volumes:
-      # Ollama models and config on local SSD
-      - ${OLLAMA_DATA_PATH}:/root/.ollama
+  #   volumes:
+  #     # Ollama models and config on local SSD
+  #     - ${OLLAMA_DATA_PATH}:/root/.ollama
 
-    environment:
-      # Listen on all container interfaces so Open WebUI can reach it
-      OLLAMA_HOST: 0.0.0.0:11434
-      # Default context window for generation requests
-      OLLAMA_CONTEXT_LENGTH: 8192
+  #   environment:
+  #     # Listen on all container interfaces so Open WebUI can reach it
+  #     OLLAMA_HOST: 0.0.0.0:11434
+  #     # Default context window for generation requests
+  #     OLLAMA_CONTEXT_LENGTH: ${OLLAMA_CONTEXT_LENGTH}
 
-    networks:
-      - llm-net
+  #   networks:
+  #     - llm-net
 
   open-webui:
     image: ghcr.io/open-webui/open-webui:main
     container_name: open-webui
     restart: unless-stopped
 
-    depends_on:
-      - ollama
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+    # depends_on:
+    #   - ollama
 
     ports:
-      - "${OPEN_WEBUI_PORT:-3000}:8080"
+      - "${OPEN_WEBUI_PORT:-8080}:8080"
 
     volumes:
       # Open WebUI database, settings, uploaded files, etc. on local SSD
@@ -41,17 +44,17 @@ services:
 
     environment:
       # Docker-internal address of the Ollama service
-      OLLAMA_BASE_URL: http://ollama:11434
+      OLLAMA_BASE_URL: http://host.docker.internal:11434
 
       # Default model options sent by Open WebUI to Ollama
       # num_ctx: context window, num_predict: max generated tokens
-      DEFAULT_MODEL_PARAMS: '{"num_ctx":8192,"num_predict":512}'
+      DEFAULT_MODEL_PARAMS: '{"num_ctx":16000,"num_predict":512, "temperature":0.7}'
 
       # Important: keep this stable between container recreations
       WEBUI_SECRET_KEY: ${WEBUI_SECRET_KEY}
 
-    networks:
-      - llm-net
+    #networks:
+    #  - llm-net
 
 networks:
   llm-net:

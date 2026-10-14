@@ -67,7 +67,7 @@ Create a secret key for Open WebUI:
 
 ## Access
 
-- Open WebUI: `http://localhost:3000` (or the port from `OPEN_WEBUI_PORT`)
+- Open WebUI: `http://localhost:8080` (or the port from `OPEN_WEBUI_PORT`)
 - Ollama API: `http://localhost:11434`
 
 ## Notes
